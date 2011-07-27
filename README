@@ -1,0 +1,14 @@
+This is a fork for arduino LiquidCrystal for russian letters support. Code added transforms russian UTF8 chars to right HD44780U codes. 
+
+Also, 16x1 display support added (for those that 8x2 logically organized). 
+
+Current compatibility - arduino-0022.
+
+=====
+
+Эта ветка - копия оригинаной библиотеки LiquidCrystal для поддержки русского языка. Добавленный код трансформирует русские символы UTF8 в правильные коды для HD44780U.
+
+Также, добавлена поддержка дисплеев 16х1, которые логически организованы как 8х2.
+
+Текущая совместимость - arduino-0022.
+
