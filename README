@@ -2,7 +2,7 @@ This is a fork for arduino LiquidCrystal for russian letters support. Code added
 
 Also, 16x1 display support added (for those that 8x2 logically organized). 
 
-Current compatibility - arduino-0022.
+Current compatibility - both arduino-0023 and arduino-1.0
 
 =====
 
@@ -10,5 +10,5 @@ Current compatibility - arduino-0022.
 
 Также, добавлена поддержка дисплеев 16х1, которые логически организованы как 8х2.
 
-Текущая совместимость - arduino-0022.
+Текущая совместимость - arduino-0023 и arduino-1.0
 

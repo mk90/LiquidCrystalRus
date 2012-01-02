@@ -4,7 +4,12 @@
 #include <string.h>
 #include <inttypes.h>
 #include <avr/pgmspace.h>
-#include "WProgram.h"
+
+#if defined(ARDUINO) && ARDUINO >= 100
+  #include "Arduino.h"
+#else
+  #include "WProgram.h"
+#endif
 
 // it is a russian alphabet translation
 // except 0401 --> 0xa2 = ╗, 0451 --> 0xb5
@@ -33,8 +38,10 @@ PROGMEM prog_uchar utf_recode[] =
 // Note, however, that resetting the Arduino doesn't reset the LCD, so we
 // can't assume that its in that state when a sketch starts (and the
 // LiquidCrystal constructor is called).
-//  modified 27 Jul 2011
+// 
+// modified 27 Jul 2011
 // by Ilya V. Danilov http://mk90.ru/
+
 
 LiquidCrystalRus::LiquidCrystalRus(uint8_t rs, uint8_t rw, uint8_t enable,
 			     uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
@@ -134,7 +141,7 @@ void LiquidCrystalRus::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
     writeNbits(0x03,4); 
     delayMicroseconds(150);
 
-    // finally, set to 4-bit interface
+    // finally, set to 8-bit interface
     writeNbits(0x02,4); 
   } else {
     // this is according to the hitachi HD44780 datasheet
@@ -189,7 +196,7 @@ void LiquidCrystalRus::home()
 void LiquidCrystalRus::setCursor(uint8_t col, uint8_t row)
 {
   int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
-  if ( row > _numlines ) {
+  if ( row >= _numlines ) {
     row = _numlines-1;    // we count rows starting w/0
   }
   
@@ -274,7 +281,12 @@ inline void LiquidCrystalRus::command(uint8_t value) {
   send(value, LOW);
 }
 
-void LiquidCrystalRus::write(uint8_t value) {
+#if defined(ARDUINO) && ARDUINO >= 100
+  size_t LiquidCrystalRus::write(uint8_t value)
+#else
+  void   LiquidCrystalRus::write(uint8_t value)
+#endif
+{
   uint8_t out_char=value;
 
   if (_dram_model == LCD_DRAM_WH1601) {  
@@ -295,6 +307,9 @@ void LiquidCrystalRus::write(uint8_t value) {
         send(pgm_read_byte_near(utf_recode + value + (utf_hi_char<<6) - 0x10), HIGH);
     }    
   } else send(out_char, HIGH);
+#if defined(ARDUINO) && ARDUINO >= 100
+  return 1; // assume sucess 
+#endif
 }
 
 /************ low level data pushing commands **********/
