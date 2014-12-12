@@ -37,7 +37,7 @@
 #include <LiquidCrystalRus.h>
 
 // initialize the library with the numbers of the interface pins
-LiquidCrystalus lcd(12, 10, 11, 5, 4, 3, 2);
+LiquidCrystalRus lcd(12, 10, 11, 5, 4, 3, 2);
 
 void setup() {
   // set up the LCD's number of rows and columns: 
