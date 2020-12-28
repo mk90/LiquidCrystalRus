@@ -12,3 +12,13 @@ Current compatibility - both arduino-1.0.6 and arduino-1.6.1
 
 Текущая совместимость - arduino-1.0.6 и arduino-1.6.1
 
+
+Добавлена возможность работы через сдвиговый регистр.
+
+Декабрь 2020 г., Д. Артем
+
+//------//------//------//------//------//------//------//
+
+Added the ability to work through a shift register.
+
+Dec 2020 by D. Artem
