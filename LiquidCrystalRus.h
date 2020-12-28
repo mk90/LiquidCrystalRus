@@ -2,13 +2,16 @@
 // based on LiquidCrystal library from ArduinoIDE, see http://arduino.cc
 //  modified 27 Jul 2011
 // by Ilya V. Danilov http://mk90.ru/
-// 
+//
+//library modified 28 Dec 2020 
+//by D. Artem https://github.com/artemned
 
 #ifndef LiquidCrystalRus_h
 #define LiquidCrystalRus_h
 
 #include <inttypes.h>
 #include "Print.h"
+#include <SPI.h>
 
 // commands
 #define LCD_CLEARDISPLAY 0x01
@@ -65,11 +68,14 @@ public:
 		uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3);
   LiquidCrystalRus(uint8_t rs, uint8_t enable,
 		uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3);
-
+  LiquidCrystalRus(uint8_t ssPin); //SPI to ShiftRegister 74HC595 ##########
   void init(uint8_t fourbitmode, uint8_t rs, uint8_t rw, uint8_t enable,
 	    uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
 	    uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7);
-    
+  void initSPI(uint8_t _ssPin); //SPI ##################################
+   //shiftRegister pins 1,2,3,4,5,6,7 represent rs, rw, enable, d4-7 in that order
+	//but we are not using RW so RW it's zero or 255
+
   void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS);
 
   void clear();
@@ -109,10 +115,22 @@ private:
   uint8_t readNbits(uint8_t); 
   void pulseEnable();
 
+  void spiSendOut();      // SPI ###########################################
+  void write4bits(uint8_t);
+ 
   uint8_t _rs_pin; // LOW: command.  HIGH: character.
   uint8_t _rw_pin; // LOW: write to LCD.  HIGH: read from LCD.
   uint8_t _enable_pin; // activated by a HIGH pulse.
   uint8_t _data_pins[8];
+  
+  //SPI #####################################################################
+  uint8_t _bitString; //for SPI  bit0=not used, bit1=RS, bit2=RW, bit3=Enable, bits4-7 = DB4-7
+  bool _usingSpi;  //to let send and write functions know we are using SPI 
+  uint8_t _latchPin;
+  uint8_t _clockDivider;
+  uint8_t _dataMode;
+  uint8_t _bitOrder;//SPI ####################################################
+
 
   uint8_t _displayfunction;
   uint8_t _displaycontrol;
