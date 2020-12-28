@@ -41,6 +41,9 @@ const char utf_recode[] PROGMEM=
 // 
 // modified 27 Jul 2011
 // by Ilya V. Danilov http://mk90.ru/
+//
+//library modified 28 Dec 2020 
+//by D. Artem https://github.com/artemned
 
 
 LiquidCrystalRus::LiquidCrystalRus(uint8_t rs, uint8_t rw, uint8_t enable,
@@ -67,6 +70,14 @@ LiquidCrystalRus::LiquidCrystalRus(uint8_t rs,  uint8_t enable,
 			     uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3)
 {
   init(1, rs, 255, enable, d0, d1, d2, d3, 0, 0, 0, 0);
+}
+
+LiquidCrystalRus::LiquidCrystalRus(uint8_t ssPin) //SPI  ##############################
+{
+    initSPI(ssPin);
+    //shiftRegister pins 1,2,3,4,5,6,7 represent rs, rw, enable, d4-7 in that order
+    //but we are not using RW so RW it's zero or 255
+    init(1, 1, 255, 3, 0, 0, 0, 0, 4, 5, 6, 7);
 }
 
 void LiquidCrystalRus::init(uint8_t fourbitmode, uint8_t rs, uint8_t rw, uint8_t enable,
@@ -98,7 +109,39 @@ void LiquidCrystalRus::init(uint8_t fourbitmode, uint8_t rs, uint8_t rw, uint8_t
   else 
     _displayfunction = LCD_8BITMODE | LCD_1LINE | LCD_5x8DOTS;
   
-  begin(16, 1);  
+  begin(16, 1); 
+  
+  if (_usingSpi) //SPI ######################################################
+  {
+      ;
+  }
+  else
+  {
+      _usingSpi = false;
+  }
+}
+
+void LiquidCrystalRus::initSPI(uint8_t ssPin) //SPI ##########################################
+{
+    // initialize SPI:
+    _usingSpi = true;
+    _latchPin = ssPin;
+    pinMode(_latchPin, OUTPUT); //just in case _latchPin is not 10 or 53 set it to output 
+                                 //otherwise SPI.begin() will set it to output but just in case
+
+    SPI.begin();
+
+    //set clockDivider to SPI_CLOCK_DIV2 by default which is 8MHz
+    _clockDivider = SPI_CLOCK_DIV2;
+    SPI.setClockDivider(_clockDivider);
+
+    //set data mode to SPI_MODE0 by default
+    _dataMode = SPI_MODE0;
+    SPI.setDataMode(_dataMode);
+
+    //set bitOrder to MSBFIRST by default
+    _bitOrder = MSBFIRST;
+    SPI.setBitOrder(_bitOrder);
 }
 
 void LiquidCrystalRus::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
@@ -316,20 +359,48 @@ inline void LiquidCrystalRus::command(uint8_t value) {
 
 // write either command or data, with automatic 4/8-bit selection
 void LiquidCrystalRus::send(uint8_t value, uint8_t mode) {
-  digitalWrite(_rs_pin, mode);
+    if (_usingSpi == false)
+    {
+        digitalWrite(_rs_pin, mode);
+        // if there is a RW pin indicated, set it low to Write
+        if (_rw_pin != 255) {
+            digitalWrite(_rw_pin, LOW);
+        }
 
-  // if there is a RW pin indicated, set it low to Write
-  if (_rw_pin != 255) { 
-    digitalWrite(_rw_pin, LOW);
-  }
-  
-  if (_displayfunction & LCD_8BITMODE) {
-    writeNbits(value,8); 
-  } else {
-    writeNbits(value>>4,4);
-    writeNbits(value,4);
-  }
+        if (_displayfunction & LCD_8BITMODE) {
+            writeNbits(value, 8);
+        }
+        else {
+            writeNbits(value >> 4, 4);
+            writeNbits(value, 4);
+        }
+    }
+    else //we use SPI  ##########################################
+    {
+        bitWrite(_bitString, _rs_pin, mode); //set RS to mode
+        spiSendOut();
+
+        //we are not using RW with SPI so we are not even bothering
+        //or 8BITMODE so we go straight to write4bits
+        write4bits(value >> 4);
+        write4bits(value);
+    }
 }
+void LiquidCrystalRus::write4bits(uint8_t value) {
+    
+    //We use SPI ##############################################
+    
+        for (int i = 4; i < 8; i++)
+        {
+            //we put the four bits in the _bit_string
+            bitWrite(_bitString, i, ((value >> (i - 4)) & 0x01));
+        }
+       
+    spiSendOut();
+    
+    pulseEnable();
+}
+
 
 // read  data, with automatic 4/8-bit selection
 uint8_t LiquidCrystalRus::recv(uint8_t mode) {
@@ -349,13 +420,29 @@ uint8_t LiquidCrystalRus::recv(uint8_t mode) {
   }
   return retval;
 }
+
 void LiquidCrystalRus::pulseEnable() {
-  digitalWrite(_enable_pin, LOW);
-  delayMicroseconds(1);    
-  digitalWrite(_enable_pin, HIGH);
-  delayMicroseconds(1);    // enable pulse must be >450ns
-  digitalWrite(_enable_pin, LOW);
-  delayMicroseconds(100);   // commands need > 37us to settle
+    if (_usingSpi == false)
+    {
+        digitalWrite(_enable_pin, LOW);
+        delayMicroseconds(1);
+        digitalWrite(_enable_pin, HIGH);
+        delayMicroseconds(1);    // enable pulse must be >450ns
+        digitalWrite(_enable_pin, LOW);
+        delayMicroseconds(100);   // commands need > 37us to settle
+    }
+    else //we use SPI #############################################
+    {
+        bitWrite(_bitString, _enable_pin, LOW);
+        spiSendOut();
+        delayMicroseconds(1);
+        bitWrite(_bitString, _enable_pin, HIGH);
+        spiSendOut();
+        delayMicroseconds(1);    // enable pulse must be >450ns
+        bitWrite(_bitString, _enable_pin, LOW);
+        spiSendOut();
+        delayMicroseconds(40);   // commands need > 37us to settle
+    }
 }
 
 void LiquidCrystalRus::writeNbits(uint8_t value, uint8_t n) {
@@ -366,6 +453,20 @@ void LiquidCrystalRus::writeNbits(uint8_t value, uint8_t n) {
 
   pulseEnable();
 }
+
+void LiquidCrystalRus::spiSendOut() //SPI #############################
+{
+    //just in case you are using SPI for more then one device
+    //set bitOrder, clockDivider and dataMode each time
+    SPI.setClockDivider(_clockDivider);
+    SPI.setBitOrder(_bitOrder);
+    SPI.setDataMode(_dataMode);
+
+    digitalWrite(_latchPin, LOW);
+    SPI.transfer(_bitString);
+    digitalWrite(_latchPin, HIGH);
+}
+
 
 uint8_t LiquidCrystalRus::readNbits(uint8_t n) {
   uint8_t retval=0;
