@@ -1,7 +1,7 @@
 //
 // based on LiquidCrystal library from ArduinoIDE, see http://arduino.cc
 //  modified 27 Jul 2011
-// by Ilya V. Danilov http://mk90.ru/
+// by Ilya V. Danilov http://mk90.org/
 // 
 
 #ifndef LiquidCrystalRus_h
@@ -123,7 +123,7 @@ private:
   uint8_t _numlines,_currline;
 
   uint8_t _dram_model;
-  uint8_t utf_hi_char; // UTF-8 high part
+  int8_t utf_hi_char; // UTF-8 high part
 };
 
 #endif
