@@ -21,6 +21,7 @@ Current compatibility - both arduino-1.0.6 and arduino-1.6.1
 
 Added the ability to work through a shift register.
 Set up for ShiftRegister pins: 1,2,3,4,5,6,7 represent rs, rw, enable, d4-7 in that order
-but we are not using RW so RW it's zero or 255
+but we are not using RW so RW it's zero or 255. You must used pin SPI (SS<->ST_CP,
+CLK<->SH_CP, MOSI<->DS) on your chip.
 
 Dec 2020 by D. Artem
